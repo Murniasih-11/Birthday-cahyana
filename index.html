@@ -688,6 +688,8 @@
 <!-- FLOATING MUSIC TOGGLE BTN -->
 <button class="music-btn" id="musicBtn" title="Play/Pause Musik Ulang Tahun">🎵</button>
 
+<audio id="bgMusic" src="hbd.mp3" loop></audio>
+
 <script>
 // PARTICLES (MATCH COZY LATTE THEME)
 const emojis=['🐱','☕','🍪','✨','🤎','🐾','⭐','💫','🎂','🎈','🍰'];
@@ -704,15 +706,18 @@ for(let i=0;i<25;i++){
 }
 
 // AUDIO GATE & SCROLL UNLOCK
-let audioCtx=null, musicPlaying=false, stopMusicFn=null;
-const musicBtn=document.getElementById('musicBtn');
+const bgMusic = document.getElementById('bgMusic');
+let musicPlaying = false;
 
 function startCelebration(){
-  // Start the birthday synthesized music
+  // Start the birthday MP3 music
   if(!musicPlaying){
-    stopMusicFn=createBirthdayMusic();
-    musicPlaying=true;
-    musicBtn.textContent='🔇';
+    bgMusic.play().then(() => {
+      musicPlaying=true;
+      musicBtn.textContent='🔇';
+    }).catch(err => {
+      console.log("Audio play failed:", err);
+    });
   }
   
   // Show content and unlock scrolling
@@ -855,59 +860,17 @@ function ameen(n){
   spawnConfetti(el);
 }
 
-// BIRTHDAY MUSIC SYNTHESIZER
-function createBirthdayMusic(){
-  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-  const ctx=audioCtx;
-  const notes=[
-    {f:261.6,d:0.3},{f:261.6,d:0.15},{f:293.7,d:0.45},{f:261.6,d:0.45},{f:349.2,d:0.45},{f:329.6,d:0.9},
-    {f:0,d:0.1},
-    {f:261.6,d:0.3},{f:261.6,d:0.15},{f:293.7,d:0.45},{f:261.6,d:0.45},{f:392.0,d:0.45},{f:349.2,d:0.9},
-    {f:0,d:0.1},
-    {f:261.6,d:0.3},{f:261.6,d:0.15},{f:523.2,d:0.45},{f:440.0,d:0.45},{f:349.2,d:0.45},{f:329.6,d:0.45},{f:293.7,d:0.9},
-    {f:0,d:0.1},
-    {f:466.2,d:0.3},{f:466.2,d:0.15},{f:440.0,d:0.45},{f:349.2,d:0.45},{f:392.0,d:0.45},{f:349.2,d:0.9},
-    {f:0,d:0.6},
-  ];
-  let running=true;
-  let tid=null;
-  function play(){
-    if(!running)return;
-    let t=ctx.currentTime;
-    notes.forEach(({f,d})=>{
-      if(f===0){t+=d;return;}
-      const o=ctx.createOscillator(),g=ctx.createGain();
-      const o2=ctx.createOscillator(),g2=ctx.createGain();
-      o.type='triangle'; o.frequency.value=f;
-      g.gain.setValueAtTime(0,t);
-      g.gain.linearRampToValueAtTime(0.2,t+0.02);
-      g.gain.linearRampToValueAtTime(0.14,t+d*0.7);
-      g.gain.linearRampToValueAtTime(0,t+d*0.95);
-      o.connect(g); g.connect(ctx.destination);
-      o.start(t); o.stop(t+d);
-      o2.type='sine'; o2.frequency.value=f*2;
-      g2.gain.setValueAtTime(0,t);
-      g2.gain.linearRampToValueAtTime(0.07,t+0.01);
-      g2.gain.linearRampToValueAtTime(0,t+d*0.5);
-      o2.connect(g2); g2.connect(ctx.destination);
-      o2.start(t); o2.stop(t+d*0.5);
-      t+=d;
-    });
-    const total=notes.reduce((s,n)=>s+n.d,0);
-    tid=setTimeout(()=>{if(running)play();},total*1000+200);
-  }
-  play();
-  return ()=>{running=false;clearTimeout(tid);};
-}
-
+// MP3 MUSIC CONTROL
 musicBtn.addEventListener('click',()=>{
   if(!musicPlaying){
-    stopMusicFn=createBirthdayMusic();
-    musicPlaying=true;
-    musicBtn.textContent='🔇';
+    bgMusic.play().then(() => {
+      musicPlaying=true;
+      musicBtn.textContent='🔇';
+    }).catch(err => {
+      console.log("Audio play failed:", err);
+    });
   } else {
-    if(stopMusicFn)stopMusicFn();
-    if(audioCtx){audioCtx.close();audioCtx=null;}
+    bgMusic.pause();
     musicPlaying=false;
     musicBtn.textContent='🎵';
   }
